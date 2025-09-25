@@ -1,27 +1,33 @@
-const express = require("express");
-const app = express();
+export default function handler(req, res) {
+  // VERIFICAÇÃO (GET) — usada pelo Meta na hora de configurar o webhook
+  if (req.method === 'GET') {
+    const VERIFY_TOKEN = 'vxh7'; // mesmo token que você colocou no Meta
 
-app.use(express.json());
+    const mode = req.query['hub.mode'];
+    const token = req.query['hub.verify_token'];
+    const challenge = req.query['hub.challenge'];
 
-// Rota para verificação do webhook (GET)
-app.get("/api/webhook", (req, res) => {
-  const VERIFY_TOKEN = "vxh7"; // o mesmo que você colocou no Meta
-  const mode = req.query["hub.mode"];
-  const token = req.query["hub.verify_token"];
-  const challenge = req.query["hub.challenge"];
-
-  if (mode === "subscribe" && token === VERIFY_TOKEN) {
-    console.log("Webhook verificado com sucesso!");
-    res.status(200).send(challenge);
-  } else {
-    res.sendStatus(403);
+    if (mode === 'subscribe' && token === VERIFY_TOKEN) {
+      res.status(200).send(challenge);
+    } else {
+      res.status(403).send('Forbidden');
+    }
+    return;
   }
-});
 
-// Rota para receber mensagens (POST)
-app.post("/api/webhook", (req, res) => {
-  console.log("Mensagem recebida:", JSON.stringify(req.body, null, 2));
-  res.sendStatus(200);
-});
+  // RECEBIMENTO DE EVENTOS (POST)
+  if (req.method === 'POST') {
+    try {
+      console.log('Webhook payload:', JSON.stringify(req.body, null, 2));
+      res.status(200).send('EVENT_RECEIVED');
+    } catch (e) {
+      console.error('Erro ao processar payload:', e);
+      res.status(500).send('Erro interno');
+    }
+    return;
+  }
 
-module.exports = app;
+  // Outros métodos não permitidos
+  res.setHeader('Allow', ['GET', 'POST']);
+  res.status(405).end('Method Not Allowed');
+}
