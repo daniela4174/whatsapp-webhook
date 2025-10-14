@@ -1,23 +1,25 @@
-export default function handler(req, res) {
-  const VERIFY_TOKEN = 'vxh7';
+// api/webhooks.js  (Vercel Serverless Function - CommonJS)
+module.exports = (req, res) => {
+  try {
+    if (req.method === 'GET') {
+      const mode = req.query['hub.mode'];
+      const token = req.query['hub.verify_token'];
+      const challenge = req.query['hub.challenge'];
 
-  if (req.method === 'GET') {
-    const mode = req.query['hub.mode'];
-    const token = req.query['hub.verify_token'];
-    const challenge = req.query['hub.challenge'];
-
-    if (mode === 'subscribe' && token === VERIFY_TOKEN) {
-      return res.status(200).send(challenge);
-    } else {
-      return res.sendStatus(403);
+      if (mode === 'subscribe' && token === 'VXH7') {
+        return res.status(200).send(challenge);
+      }
+      return res.status(403).send('Forbidden');
     }
+
+    if (req.method === 'POST') {
+      // webhook do WhatsApp vai postar aqui
+      return res.status(200).send('EVENT_RECEIVED');
+    }
+
+    return res.status(404).end();
+  } catch (e) {
+    return res.status(500).send('SERVER_ERROR');
   }
-
-  if (req.method === 'POST') {
-    console.log('EVENTO RECEBIDO:', JSON.stringify(req.body, null, 2));
-    return res.sendStatus(200);
-  }
-
-  return res.sendStatus(404);
-}
-
+};
+ 
